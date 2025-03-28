@@ -95,3 +95,19 @@ RwLock dipilih karena sifat alami akses data dalam sistem notifikasi ini. Saat a
 Rust mencegah mutasi langsung variabel static karena bahasa ini dirancang untuk menjamin keamanan memori tanpa perlu garbage collector. Di Java, variabel static bisa diubah langsung karena Java memiliki runtime yang menangani konkurensi dan memori secara otomatis. Rust memilih pendekatan berbeda dengan memaksa developer untuk secara eksplisit mengelola akses thread-safe ke data global menggunakan primitif seperti Mutex atau RwLock. lazy_static digunakan karena menyediakan cara aman untuk inisialisasi variabel global yang thread-safe. Ini mencegah masalah seperti race condition yang bisa terjadi jika variabel static diubah secara langsung oleh banyak thread.
 
 #### Reflection Subscriber-2
+
+1. Have you explored things outside of the steps in the tutorial, for example: src/lib.rs? If not, explain why you did not do so. If yes, explain things that you have learned from those other parts of code.
+
+Saya telah mempelajari bagian lib.rs yang bertugas sebagai inti konfigurasi dan error handling. Dari sini, saya memahami cara Rust mengelola environment variables menggunakan dotenvy dan Figment untuk menggabungkan konfigurasi default dengan variabel lingkungan. Struktur AppConfig yang menggunakan Getters dari library getset memungkinkan akses aman ke nilai konfigurasi tanpa risiko modifikasi tidak sengaja. Selain itu, implementasi lazy_static untuk REQWEST_CLIENT dan APP_CONFIG mengajarkan cara membuat instance global yang diinisialisasi sekali (thread-safe) — sesuatu yang krusial untuk koneksi HTTP yang dipakai di banyak tempat. Error handling dengan tipe kustom ErrorResponse juga memberi contoh konkret cara menyusun respons error yang konsisten.
+
+2. Since you have completed the tutorial by now and have tried to test your notification system by spawning multiple instances of Receiver, explain how Observer pattern eases you to plug in more subscribers. How about spawning more than one instance of Main app, will it still be easy enough to add to the system?
+
+Observer Pattern mempermudah penambahan subscriber karena sistem hanya perlu memanggil endpoint /subscribe/<product_type> dengan URL receiver baru. Contoh: Jika ada 5 instance receiver berjalan di port berbeda (8001-8005), masing-masing bisa subscribe ke publisher dengan mengirim URL unik mereka. Publisher akan menyimpan semua URL di DashMap, dan setiap notifikasi akan dikirim ke seluruh subscriber terdaftar secara paralel. Jika ada instance Main app baru, selama mereka mengimplementasikan endpoint/receive yang sesuai, integrasi tetap mudah tanpa perlu modifikasi kode publisher — cukup tambahkan URL mereka via subscribe.
+
+3. Have you tried to make your own Tests, or enhance documentation on your Postman collection? If you have tried those features, tell us whether it is useful for your work (it can be your tutorial work or your Group Project).
+
+- Subscribe/unsubscribe dengan berbagai product_type
+- Mengirim notifikasi manual via /receive
+- Simulasi error seperti unsubscribe ke product_type yang tidak ada
+
+Fitur Environment Variables di Postman sangat membantu untuk menguji di lingkungan berbeda tanpa mengubah URL manual. Automated testing dengan Newman berguna untuk menjalankan skenario uji secara konsisten, terutama saat ada perubahan kode.
